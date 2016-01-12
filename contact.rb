@@ -20,7 +20,7 @@ class Contact
       ret_str = ""
       count = 0
       CSV.foreach('contacts.csv') do |row|
-        ret_str << "#{row[0]}: #{row[0]} (#{row[1]})\n"
+        ret_str << "#{$.}: #{row[0]} (#{row[1]})\n"
         count += 1
       end
       ret_str << "---\n#{count} records total"
@@ -58,10 +58,17 @@ class Contact
     # Returns an array of contacts who match the given term.
     def search(term)
       # TODO: Select the Contact instances from the 'contacts.csv' file whose name or email attributes contain the search term.
+      # ret_str = ""
 
-      puts "Search contact."
-
-
+      # count = 0
+      # CSV.foreach('contacts.csv') do |row|
+      #   if row.include?(/.*Andy.*/)
+      #     ret_str << "#{$.}: #{row[0]} (#{row[1]})\n"
+      #     count += 1
+      #   end
+      # end
+      # ret_str << "---\n#{count} records total"
+      # ret_str
     end
 
   end
