@@ -20,7 +20,7 @@ class Contact
       ret_str = ""
       count = 0
       CSV.foreach('contacts.csv') do |row|
-        ret_str << "#{$.}: #{row[1]} (#{row[2]})\n"
+        ret_str << "#{$.}: #{row[0]} (#{row[1]})\n"
         count += 1
       end
       ret_str << "---\n#{count} records total"
@@ -43,11 +43,34 @@ class Contact
     # Returns the contact with the specified id. If no contact has the id, returns nil.
     def find(id)
       # TODO: Find the Contact in the 'contacts.csv' file with the matching id.
+      ret_str = ""
+      count = 0
+      CSV.foreach('contacts.csv') do |row|
+        count += 1
+        if id.to_i == count
+          ret_str = "#{id}: #{row[0]} (#{row[1]})\n"
+        end
+      end
+      ret_str = "ID not found." if ret_str == ""
+      ret_str
     end
 
     # Returns an array of contacts who match the given term.
     def search(term)
       # TODO: Select the Contact instances from the 'contacts.csv' file whose name or email attributes contain the search term.
+      
+
+      # ret_str = ""
+
+      # count = 0
+      # CSV.foreach('contacts.csv') do |row|
+      #   if row.include?(/.*Andy.*/)
+      #     ret_str << "#{$.}: #{row[0]} (#{row[1]})\n"
+      #     count += 1
+      #   end
+      # end
+      # ret_str << "---\n#{count} records total"
+      # ret_str
     end
 
   end

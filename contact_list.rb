@@ -16,7 +16,7 @@ class ContactList
       show    - Show a contact
       search  - Search contacts 
       "
-
+      # input, name, email, password = ARGV
     case gets.chomp
       when "new"
         puts "Enter the contact's full name."
@@ -28,9 +28,11 @@ class ContactList
       when "list"
         puts Contact.all
       when "show"
-        puts "Show contact."
+        puts "Please enter ID."
+        puts Contact.find(gets.chomp)
       when "search"
-        puts "Search contact."
+        puts "Please enter search term."
+        puts Contact.search(gets.chomp)
       else
     end
   end
