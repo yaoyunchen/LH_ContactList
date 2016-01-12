@@ -13,37 +13,42 @@ class ContactList
     case ARGV[0]
       when "new"
         if ARGV[1] == nil
-          name = get_input("Enter the contact's full name.")
-          email = get_input("Enter contact's email address.")
+          name = get_input("full name")
+          email = get_input("email address")
         else
           name = ARGV[1]
           if ARGV[2] == nil
-            email = get_input("Enter contact's email address.")
+            email = get_input("email address")
           else
             email = ARGV[2]
+
+            phone = []
+            phone_numbers = ARGV.drop(3)
+
+            until phone_numbers.empty?
+              phone << phone_numbers[0]
+              phone_numbers = phone_numbers.drop(1)
+            end
           end
-          phone = ARGV[3]
         end
         begin
           raise EmailExistsError if Contact.email_exists?(email)
-          puts Contact.create(name, email, phone)
+          phone = nil if phone == ""
+          puts Contact.create(name, email, phone.join(",").gsub(",","/"))
         rescue EmailExistsError
           puts "The entered email exists in the contact list already."
         end
-        
-        
-        
       when "list"
         puts Contact.all
       when "show"
         if ARGV[1] == nil
-          puts Contact.find(get_input("Please enter the ID."))
+          puts Contact.find(get_input("ID"))
         else
           puts Contact.find(ARGV[1])
         end
       when "search"
         if ARGV[1] == nil
-          puts Contact.search(get_input("Please enter search term."))
+          puts Contact.search(get_input("search term"))
         else
           puts Contact.search(ARGV[1])
         end
@@ -54,7 +59,7 @@ class ContactList
 
 
   def get_input(string)
-    puts string
+    puts "Please enter #{string}."
     $stdin.gets.chomp
   end
 
