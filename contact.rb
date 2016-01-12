@@ -18,7 +18,14 @@ class Contact
 
     # Returns an Array of Contacts loaded from the database.
     def all
-      # TODO: Return an Array of Contact instances made from the data in 'contacts.csv'.
+      ret_str = ""
+      count = 0
+      CSV.foreach('contacts.csv') do |row|
+        ret_str << "#{$.}: #{row[0]} (#{row[1]})\n"
+        count += 1
+      end
+      ret_str << "---\n#{count} records total"
+      ret_str
     end
 
     # Creates a new contact, adding it to the database, returning the new contact.

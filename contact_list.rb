@@ -21,7 +21,7 @@ class ContactList
       when "new"
         puts "New contact."
       when "list"
-        puts "List contacts."
+        puts Contact.all
       when "show"
         puts "Show contact."
       when "search"
@@ -29,5 +29,17 @@ class ContactList
       else
     end
   end
+
+  # def list_contacts
+  #   puts "List contacts."
+  # end
+
+
+
+
+
+
+
+  #Creates instance of the class to run program.
   ContactList.new
 end
