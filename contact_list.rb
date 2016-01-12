@@ -19,7 +19,12 @@ class ContactList
 
     case gets.chomp
       when "new"
-        puts "New contact."
+        puts "Enter the contact's full name."
+        name = gets.chomp
+        
+        puts "Enter contact's email address."
+        email = gets.chomp
+        puts Contact.create(name, email)
       when "list"
         puts Contact.all
       when "show"
