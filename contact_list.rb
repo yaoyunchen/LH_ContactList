@@ -1,5 +1,5 @@
 require_relative 'contact'
-
+require 'pry'
 # Interfaces between a user and their contact list. Reads from and writes to standard I/O.
 class ContactList
 
@@ -22,8 +22,17 @@ class ContactList
           else
             email = ARGV[2]
           end
+          phone = ARGV[3]
         end
-        puts Contact.create(name, email)
+        begin
+          raise EmailExistsError if Contact.email_exists?(email)
+          puts Contact.create(name, email, phone)
+        rescue EmailExistsError
+          puts "The entered email exists in the contact list already."
+        end
+        
+        
+        
       when "list"
         puts Contact.all
       when "show"
@@ -42,6 +51,7 @@ class ContactList
         main_menu
     end
   end
+
 
   def get_input(string)
     puts string
@@ -63,7 +73,13 @@ class ContactList
         
         puts "Enter contact's email address."
         email = gets.chomp
-        puts Contact.create(name, email)
+
+        begin  
+          raise EmailExistsError if Contact.email_exists?(email)
+          puts Contact.create(name, email)
+        rescue EmailExistsError
+          puts "The entered email exists in the contact list already."
+        end
       when "list"
         puts Contact.all
       when "show"
@@ -75,6 +91,13 @@ class ContactList
     end
   end
 
+
+  class EmailExistsError < StandardError
+  
+  end
+
   #Creates instance of the class to run program.
   ContactList.new
 end
+
+
