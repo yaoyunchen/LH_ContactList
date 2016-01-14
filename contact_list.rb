@@ -1,5 +1,9 @@
-require_relative 'contact'
+#!/usr/bin/env ruby
+
 require 'pry'
+
+require_relative 'contact'
+
 # Interfaces between a user and their contact list. Reads from and writes to standard I/O.
 class ContactList
 
