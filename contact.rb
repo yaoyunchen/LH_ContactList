@@ -1,80 +1,161 @@
-require 'csv'
+require 'pg'
 
-# Represents a person in an address book.
 class Contact
 
-  attr_accessor :name, :email, :phone
-  attr_reader :ID
-  @@file = 'contacts.csv'
+  attr_accessor :id, :name, :email, :numbers
+ 
 
   def initialize(name, email)
-    # TODO: Assign parameter values to instance variables.
-    @ID = ID
+    @id = id
     @name = name
     @email = email
-    @phone = phone
+    @numbers = {}
   end
 
-  # Provides functionality for managing a list of Contacts in a database.
+
+  def is_new?
+    @id.nil?
+  end
+
+
+  def save
+    if is_new?
+      result = Contact::connect.exec_params('INSERT INTO contacts (name, email) VALUES ($1, $2) RETURNING id;', [name, email])
+      self.id = result[0]['id']
+    else
+      Contact::connect.exec_params('UPDATE contacts SET name = $1, email = $2 WHERE id = $3::int', [@name, @email, @id])
+    end
+    
+    #Should be inside a transaction.
+    unless self.numbers == nil
+        save_numbers_string
+    end
+  end
+
+  def new_numbers?
+    true
+  end
+
+
+  def save_numbers_string
+    if new_numbers
+      self.numbers.each do |number|
+        Contact::connect.exec_params('
+          INSERT INTO numbers (contact_id, type, number)
+          VALUES ($1, $2, $3)
+          ;', [self.id, number.keys[0], number.values[0]])
+      end
+    else
+
+
+    end
+  end
+
+
+
+  def destroy
+    Contact::connect.exec_params("DELETE FROM contacts WHERE id = $1::int", [@id])
+  end
+
+
+
   class << self
-    # Creates a new contact, adding it to the database, returning the new contact.
-    def create(name, email, phone = nil)
-      count = 1
-      CSV.foreach(@@file) do |row|
-        count += 1
-      end
-      CSV.open(@@file, 'a') do |csv|
-        phone.nil? ? csv << [count, name, email] : csv << [count, name, email, phone]
-      end
-      "New contact #{name} (#{email}) added at ID: #{count}."
+    #Lets Ruby connect to the database.
+    def connect
+      PG.connect(
+        host: 'localhost',
+        dbname: 'contacts',
+        user: 'development',
+        password: 'development'
+        )
+    end
+
+    def list
+      result = Contact::connect.exec_params('
+        SELECT c.id, c.name, c.email, 
+          array_to_string(array_agg(n.type || \': \' || n.number),\', \') AS phone
+        FROM contacts AS c
+        LEFT JOIN numbers AS n 
+          ON c.id = n.contact_id
+        GROUP BY c.id, c.name, c.email
+        ;')
+      create_contact_array(result)
     end
 
 
-    #Goes through contacts and carry out actions based on inputs.
-    def loop_through_contacts(action, param = nil)
-      ret_str = ""
-      count = 0
+    def insert(name, email, phone = nil)
+      new_contact = Contact.new(name, email)
+      new_contact.numbers = phone
+      new_contact.save
 
-      csv_to_hash.each do |row|
-        case action
-          when "all"
-            ret_str << build_string(row)
-            count += 1
-          when "show"
-            ret_str << build_string(row) if row[:ID].to_i == param.to_i
-          when "search"  
-            unless row.values.grep(/#{param}/i) == []
-              ret_str << build_string(row)
-              count += 1
-            end
+      "New contacted added with ID: #{new_contact.id}."
+    end
+
+
+    def show(id)
+      result = Contact::connect.exec_params('
+        SELECT c.id, c.name, c.email, n.type, n.number
+        FROM contacts AS c
+        LEFT JOIN numbers AS n
+          ON c.id = n.contact_id
+        WHERE c.id = $1::int
+        ;', [id])
+      contact = Contact.new(result[0]['name'], result[0]['email'])
+      contact.id = result[0]['id']
+      
+      result.each do |ele|
+        unless ele['type'] == nil
+          contact.numbers[ele['type'].to_sym] = ele['number']
         end
       end
 
-      ret_str << "---\n#{count} records total" unless action == "show"
-      ret_str
+      contact
     end
 
 
-    #Checks if the entered email exists in the contact list already.
-    def email_exists?(email)
-      CSV.foreach(@@file) do |row|
-        return true if row.any? {|element| element =~ /#{email}/i}
-      end
+    def search(term)
+      result = Contact::connect.exec_params('
+        SELECT * 
+        FROM contacts 
+        WHERE id = $1 OR LOWER(name) LIKE $2 
+          OR LOWER(email) LIKE $2;
+        ', [is_integer(term), "%#{term.downcase}%"])
+
+      create_contact_array(result)
     end
 
 
-    #Converts the CSV file into a hash.
-    def csv_to_hash
-      keys = [:ID, :name, :email, :phone]
-      # CSV.parse(input).map {|ele| Hash[keys.zip(ele)]}
-      CSV.read(@@file).map{|a| Hash[keys.zip(a)]}
+    def update(id, new_name, new_email, new_numbers = nil)
+      contact = Contact.show(id)
+      contact.name = new_name
+      contact.email = new_email
+
+      contact.numbers = new_numbers
+
+      contact.save
+      "Contact #{id} updated."
     end
 
 
-    #Builds the return string to be displayed to the user.
-    def build_string(row)
-      "#{row[:ID]}: #{row[:name]} (#{row[:email]}) #{row[:phone]}\n"
+    def delete(id)
+      contact = Contact.show(id)
+      contact.destroy
+      "Contact #{id} deleted."
     end
+
+
+    def is_integer(input)
+      input if Integer(input) rescue -1 
+    end
+
+
+    def create_contact_array(result)
+      contact_arr = []
+      result.each {|element| contact_arr << element}
+      contact_arr
+    end
+ 
+
   end
 end
 
